@@ -1,0 +1,41 @@
+type Query {
+  bars(symbolName: String!, resolution: String!, from: Int!, to: Int!): [Bar!]!
+  symbol(symbolName: String!): LibrarySymbolInfo
+  symbols(userInput: String!, exchange: String, symbolType: String): [Symbol!]!
+}
+
+type Bar {
+  time: Int!
+  close: Float!
+  high: Float!
+  low: Float!
+  open: Float!
+  volume: Float!
+}
+
+type LibrarySymbolInfo {
+  name: String!
+  fullName: String!
+  description: String!
+  type: String!
+  session: String!
+  timezone: String!
+  exchange: String!
+  minmov: Int!
+  pricescale: Int!
+  has_intraday: Boolean!
+  visible_plots_set: String!
+  has_weekly_and_monthly: Boolean!
+  supported_resolutions: [String!]!
+  volume_precision: Int!
+  data_status: String!
+}
+
+type Symbol {
+  description: String!
+  exchange: String!
+  symbol: String!
+  ticker: String!
+  type: String!
+}
+
