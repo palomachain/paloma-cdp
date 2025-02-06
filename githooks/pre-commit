@@ -1,0 +1,55 @@
+#!/bin/sh
+STAGED_GO_FILES=$(git diff --cached --name-only | grep ".go$")
+
+if [[ "$STAGED_GO_FILES" = "" ]]; then
+	exit 0
+fi
+
+GOLINT=staticcheck
+GOIMPORTS=goimports
+GOFMT=gofumpt
+GCI=gci
+
+# Check for golint
+if ! [ -x "$(command -v $GOLINT)" ]; then
+	printf "\t\033[41mPlease install golint\033[0m (go install honnef.co/go/tools/cmd/staticcheck@latest)"
+	exit 1
+fi
+
+# Check for goimports
+if ! [ -x "$(command -v $GOIMPORTS)" ]; then
+	printf "\t\033[41mPlease install goimports\033[0m (go get golang.org/x/tools/cmd/goimports)"
+	exit 1
+fi
+
+# Check for gofmt
+if ! [ -x "$(command -v $GOFMT)" ]; then
+	printf "\t\033[41mPlease install gofmt\033[0m (go install mvdan.cc/gofumpt@latest)"
+	exit 1
+fi
+
+# Check for gci
+if ! [ -x "$(command -v $GCI)" ]; then
+	printf "\t\033[41mPlease install gci\033[0m (go install github.com/daixiang0/gci@latest)"
+	exit 1
+fi
+
+PASS=true
+
+for FILE in $STAGED_GO_FILES; do
+	# Run goimports and gofmt on the staged file
+	$GOIMPORTS -w $FILE
+	$GOFMT -w $FILE
+	$GCI write $FILE --skip-generated -s standard -s default
+	# $GOLINT ./...
+
+done
+
+if ! $PASS; then
+	printf "\033[0;30m\033[41mCOMMIT FAILED\033[0m\n"
+	exit 1
+else
+	printf "\033[0;30m\033[42mCOMMIT SUCCEEDED\033[0m\n"
+fi
+
+e

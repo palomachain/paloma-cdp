@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg17
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=trustno1
+      - POSTGRES_USER=cdp
+      - POSTGRES_DB=cdp

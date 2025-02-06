@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+echo "Running commit message checks..."
+
+commit="$(cat .git/COMMIT_EDITMSG)"
+regex="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?: .+$"
+
+
+if ! echo "$commit" | grep -Pq "$regex"
+then
+    echo
+    echo "❌ Failed to create commit. Your commit message does not follow the conventional commit format."
+    echo "Please use the following format: $(colorPrint brightRed 'type(scope)?: description')"
+    echo "Available types are listed below. Scope is optional. Use ! after type to indicate breaking change."
+    echo
+    echo "Quick examples:"
+    echo "feat: add email notifications on new direct messages"
+    echo "feat(shopping cart): add the amazing button"
+    echo "feat!: remove ticket list endpoint"
+    echo "fix(api): handle empty message in request body"
+    echo "chore(deps): bump some-package-name to version 2.0.0"
+    echo
+
+    echo "Put newline before extended commit body"
+    echo "More details at $(underline "http://www.conventionalcommits.org")"
+    echo
+    exit 1
+fi
