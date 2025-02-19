@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/uptrace/bun/migrate"
 )
 
@@ -13,7 +14,6 @@ import (
 var sqlMigrations embed.FS
 
 func (db *Database) Migrate(ctx context.Context) (err error) {
-	logger := slog.Default().With("component", "migrator")
 	Migrations := migrate.NewMigrations()
 	if err := Migrations.Discover(sqlMigrations); err != nil {
 		return fmt.Errorf("failed to discover migrations: %w", err)
@@ -38,7 +38,7 @@ func (db *Database) Migrate(ctx context.Context) (err error) {
 
 	g, err := m.Migrate(ctx)
 	if err != nil {
-		logger.ErrorContext(ctx, "Failed to run migrations. Attempting rollback", "error", err)
+		liblog.WithError(ctx, err, "Failed to run migrations. Attempting rollback")
 		if _, err := m.Rollback(ctx); err != nil {
 			panic(err)
 		}
@@ -46,7 +46,7 @@ func (db *Database) Migrate(ctx context.Context) (err error) {
 	}
 
 	for _, v := range g.Migrations.Applied() {
-		logger.InfoContext(ctx, "Applied migration", "id", v.ID, "name", v.Name)
+		slog.Default().InfoContext(ctx, "Applied migration", "id", v.ID, "name", v.Name)
 	}
 
 	return nil

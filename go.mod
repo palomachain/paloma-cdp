@@ -1,6 +1,6 @@
 module github.com/palomachain/paloma-cdp
 
-go 1.23.5
+go 1.24
 
 require (
 	github.com/99designs/gqlgen v0.17.64
@@ -8,6 +8,10 @@ require (
 	github.com/cometbft/cometbft v1.0.1
 	github.com/go-chi/chi v1.5.5
 	github.com/rs/xid v1.6.0
+	github.com/swaggest/openapi-go v0.2.54
+	github.com/swaggest/rest v0.2.71
+	github.com/swaggest/swgui v1.8.2
+	github.com/swaggest/usecase v1.3.1
 	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/driver/pgdriver v1.2.9
@@ -35,6 +39,7 @@ require (
 	github.com/dgraph-io/ristretto/v2 v2.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
+	github.com/go-chi/chi/v5 v5.2.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
@@ -67,13 +72,18 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/supranational/blst v0.3.13 // indirect
+	github.com/swaggest/form/v5 v5.1.1 // indirect
+	github.com/swaggest/jsonschema-go v0.3.73 // indirect
+	github.com/swaggest/refl v1.3.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
+	github.com/vearutop/statigz v1.4.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
@@ -92,6 +102,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 )

@@ -24,7 +24,7 @@ environment-up:
 	docker compose -f test/build/docker-compose.yml up -d
 
 environment-down:
-	docker compose -f test/build/docker-compose.yml down -v
+	docker compose -f test/build/docker-compose.yml down --volumes
 
 test:
 	@go test ./...

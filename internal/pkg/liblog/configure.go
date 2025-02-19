@@ -7,16 +7,21 @@ import (
 )
 
 const (
-	cRequestId = "x-request-id"
+	cServiceName = "x-cdp-service-name"
+	cRequestId   = "x-request-id"
 )
+
+var logFields = []string{cServiceName, cRequestId}
 
 type contextHandler struct {
 	slog.Handler
 }
 
 func (h *contextHandler) Handle(ctx context.Context, r slog.Record) error {
-	if requestID, ok := ctx.Value(cRequestId).(string); ok {
-		r.Add(cRequestId, requestID)
+	for _, key := range logFields {
+		if value, ok := ctx.Value(key).(string); ok {
+			r.Add(key, value)
+		}
 	}
 
 	return h.Handler.Handle(ctx, r)

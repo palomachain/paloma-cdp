@@ -16,19 +16,11 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/app/config"
 	"github.com/palomachain/paloma-cdp/internal/app/gql"
 	"github.com/palomachain/paloma-cdp/internal/app/gql/resolvers"
-	"github.com/palomachain/paloma-cdp/internal/app/ingest"
+	"github.com/palomachain/paloma-cdp/internal/app/rest"
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 	"github.com/vektah/gqlparser/v2/ast"
 )
-
-func Quickrun() {
-	i := ingest.NewIngester(nil, nil)
-	err := i.Run()
-	if err != nil {
-		log.Fatal("Oh no it happened: ", err)
-	}
-}
 
 func Run() {
 	os.Setenv("CDP_PSQL_ADDRESS", "localhost:5432")
@@ -37,6 +29,7 @@ func Run() {
 	os.Setenv("CDP_PSQL_DATABASE", "cdp")
 	os.Setenv("CDP_GQL_PORT", "8080")
 
+	rest.Run()
 	ctx, _ := context.WithCancel(context.Background())
 	ctx = context.WithValue(ctx, "request_id", "hurensohn")
 	liblog.Configure()

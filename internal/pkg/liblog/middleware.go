@@ -18,6 +18,10 @@ func Middleware() func(http.Handler) http.Handler {
 	}
 }
 
+func HydrateServiceName(ctx context.Context, name string) context.Context {
+	return context.WithValue(ctx, cServiceName, name)
+}
+
 func newID() string {
 	return xid.New().String()
 }
