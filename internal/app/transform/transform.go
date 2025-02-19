@@ -89,6 +89,15 @@ func consume(ctx context.Context,
 ) error {
 	slog.Default().InfoContext(ctx, "Consuming transaction", "hash", tx.Hash)
 
+	for _, v := range tx.Data.Result.Events {
+		fmt.Printf("Event type: %v\n", v.Type)
+		for _, j := range v.Attributes {
+			fmt.Printf("-- Attribute: %v\n", j)
+		}
+	}
+
+	return nil
+
 	if !isSwapTx(ctx, tx) {
 		slog.Default().DebugContext(ctx, "Skipping non-swap tx.", "hash", tx.Hash)
 		return nil
@@ -103,7 +112,7 @@ func isSwapTx(ctx context.Context, tx model.RawTransaction) bool {
 	//
 	// Sender should be paloma17nm703yu6vy6jpwn686e5ucal7n4cw8fc6da9ee0ctcwmr9vc9nsr4evrh for
 	// Bonding curve or the other one
-	for _, v := range []string{
+	for range []string{
 		"wasm._contract_address",
 		"wasm.action",
 		"wasm.sender",
@@ -113,10 +122,10 @@ func isSwapTx(ctx context.Context, tx model.RawTransaction) bool {
 		"wasm.offer_amount",
 		"wasm.return_amount",
 	} {
-		i, ok := tx.Data[v]
-		if !ok || len(i) < 1 {
-			return false
-		}
+		// i, ok := tx..Data[v]
+		// if !ok || len(i) < 1 {
+		// 	return false
+		// }
 	}
 
 	return true
@@ -124,13 +133,13 @@ func isSwapTx(ctx context.Context, tx model.RawTransaction) bool {
 
 func loadExchangeLkUp(ctx context.Context, db *persistence.Database) (lkup map[string]model.Exchange, err error) {
 	var exchanges []model.ExchangeLkup
-	if err = db.NewSelect().Model(exchanges).Relation("Exchange").Scan(ctx); err != nil {
+	if err = db.NewSelect().Model(&exchanges).Relation("Exchange").Scan(ctx); err != nil {
 		return nil, fmt.Errorf("failed to fetch exchanges: %w", err)
 	}
 
-	for _, v := range exchanges {
-		lkup[v.Address] = *v.Exchange
-	}
+	// for _, v := range exchanges {
+	// 	lkup[v.Address] = *v.Exchange
+	// }
 
 	return lkup, nil
 }

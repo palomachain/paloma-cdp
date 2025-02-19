@@ -66,6 +66,6 @@ CREATE TABLE IF NOT EXISTS exchange_lkup (
 
 --bun:split
 
-INSERT INTO exchanges (name) VALUES ('BONDING', 'DEX');
+INSERT INTO exchanges (id, name) VALUES (1, 'BONDING'), (2, 'DEX');
 INSERT INTO exchange_lkup (address, exchange_id) VALUES ('paloma17nm703yu6vy6jpwn686e5ucal7n4cw8fc6da9ee0ctcwmr9vc9nsr4evrh', 1);
 INSERT INTO exchange_lkup (address, exchange_id) VALUES ('paloma1j76m8d04ctlqn4ll37a3453grw6gpxtgv06v76m3yxxmenfnkjxsh8u3x3', 2);

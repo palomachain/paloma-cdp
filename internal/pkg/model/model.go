@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/cometbft/cometbft/types"
 	"github.com/uptrace/bun"
 )
 
@@ -43,7 +44,7 @@ type PriceData struct {
 type RawTransaction struct {
 	bun.BaseModel `bun:"table:ingest,alias:i"`
 
-	Hash      string              `bun:"tx_hash,pk"`
-	Data      map[string][]string `bun:",notnull,msgpack"`
-	Timestamp time.Time           `bun:"received,notnull,default:current_timestamp"`
+	Hash      string            `bun:"tx_hash,pk"`
+	Data      types.EventDataTx `bun:",notnull,msgpack"`
+	Timestamp time.Time         `bun:"received,notnull,default:current_timestamp"`
 }

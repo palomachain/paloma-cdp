@@ -83,9 +83,11 @@ func handleTx(ctx context.Context, db *persistence.Database, tx coretypes.Result
 		return err
 	}
 
+	data := tx.Data.(types.EventDataTx)
+
 	m := &model.RawTransaction{
 		Hash: hash,
-		Data: tx.Events,
+		Data: data,
 	}
 
 	_, err = db.NewInsert().Model(m).Exec(ctx)
