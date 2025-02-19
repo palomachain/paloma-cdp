@@ -7,13 +7,14 @@ import (
 	"github.com/rs/xid"
 )
 
-func Middleware() func(http.Handler) http.Handler {
+func Middleware(svcName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			id := newID()
 			ctx := context.WithValue(r.Context(), cRequestId, id)
-			r = r.WithContext(ctx)
-			next.ServeHTTP(w, r)
+			ctx = context.WithValue(ctx, cServiceName, svcName)
+			w.Header().Set(cRequestId, id)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

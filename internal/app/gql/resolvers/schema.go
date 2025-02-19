@@ -55,13 +55,9 @@ func (r *queryResolver) Symbol(ctx context.Context, symbolName string) (*model.L
 	}
 
 	return &model.LibrarySymbolInfo{
-		FullName:             fmt.Sprintf("%s:%s", m.Exchange.Name, m.Name),
-		Name:                 m.Name,
-		Description:          m.Description,
 		Type:                 cSymbolType,
 		Session:              cSymbolSession,
 		Timezone:             cSymbolTimezone,
-		Exchange:             m.Exchange.Name,
 		Minmov:               cSymbolMinMov,
 		Pricescale:           cSymbolPricescale,
 		HasIntraday:          true,
@@ -98,11 +94,8 @@ func (r *queryResolver) Symbols(ctx context.Context, userInput string, exchange 
 	rs := make([]model.Symbol, len(m))
 	for i, v := range m {
 		rs[i] = model.Symbol{
-			Symbol:      v.Name,
-			Description: v.Description,
-			Exchange:    v.Exchange.Name,
-			Ticker:      v.Name,
-			Type:        cSymbolType,
+			Symbol: v.DisplayName,
+			Type:   cSymbolType,
 		}
 	}
 

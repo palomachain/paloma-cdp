@@ -5,21 +5,25 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/model"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
+	"github.com/palomachain/paloma-cdp/internal/pkg/types"
 	"github.com/uptrace/bun"
-)
-
-const (
-	cPollingLimit int = 20
 )
 
 type Configuration struct {
 	PollingInterval time.Duration `env:"CDP_TRANSFORMER_POLLING_INTERVAL,notEmpty" envDefault:"1s"`
 }
+
+const (
+	cPollingLimit int = 20
+)
+
+var gLkUp map[string]model.Exchange
 
 func Run(
 	ctx context.Context,
@@ -27,6 +31,14 @@ func Run(
 	cfg *Configuration,
 ) error {
 	slog.Default().InfoContext(ctx, "Service running.")
+
+	var err error
+	gLkUp, err = loadExchangeLkUp(ctx, db)
+	if err != nil {
+		return fmt.Errorf("failed to load exchange lookup: %w", err)
+	}
+
+	// TODO: When and HOW to recover from a panic?
 
 	tkr := time.NewTicker(cfg.PollingInterval)
 	for {
@@ -56,20 +68,15 @@ func handleTick(ctx context.Context, db *persistence.Database) error {
 		}
 
 		slog.Default().DebugContext(ctx, "Fetched transactions.", "count", count)
-		exchangeLkup, err := loadExchangeLkUp(ctx, db)
-		if err != nil {
-			return fmt.Errorf("failed to load exchange lookup: %w", err)
-		}
-
 		err = db.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			for _, v := range txs {
-				if err := consume(ctx, db, exchangeLkup, v); err != nil {
+				if err := consumeTx(ctx, tx, gLkUp, v); err != nil {
 					return err
 				}
 			}
 
-			// TODO: Insert & Delete
-			return nil
+			_, err = tx.NewDelete().Model(&txs).WherePK().Exec(ctx)
+			return err
 		})
 		if err != nil {
 			return err
@@ -82,55 +89,166 @@ func handleTick(ctx context.Context, db *persistence.Database) error {
 	}
 }
 
-func consume(ctx context.Context,
-	db *persistence.Database,
+func consumeTx(ctx context.Context,
+	db bun.Tx,
 	exchangeLkup map[string]model.Exchange,
 	tx model.RawTransaction,
-) error {
+) (err error) {
 	slog.Default().InfoContext(ctx, "Consuming transaction", "hash", tx.Hash)
+	defer func() {
+		if err != nil {
+			// Move TX to DLQ and continue normal execution
+			_, err = db.NewInsert().Model(&tx).ModelTableExpr("ingest_dlq").Exec(ctx)
+		}
+		return
+	}()
 
-	if !isSwapTx(ctx, tx) {
-		slog.Default().DebugContext(ctx, "Skipping non-swap tx.", "hash", tx.Hash)
+	evts, err := types.TryParseSwapEvents(ctx, tx.Data.Result.Events)
+	if err != nil {
+		return fmt.Errorf("failed to parse swap events: %w", err)
+	}
+
+	if len(evts) < 1 {
+		slog.Default().InfoContext(ctx, "No swap events found", "hash", tx.Hash)
 		return nil
+	}
+
+	for _, evt := range evts {
+		evt.Timestamp = tx.Timestamp
+		if err := consumeEvent(ctx, db, exchangeLkup, evt); err != nil {
+			liblog.WithError(ctx, err, "Failed to consume event", "hash", tx.Hash, "event", evt)
+			return err
+		}
 	}
 
 	return nil
 }
 
-func isSwapTx(ctx context.Context, tx model.RawTransaction) bool {
-	// Offer ammount & offer asset are EXACTLY what was sent to the contract
-	// Return amount & asset are EXACTLY what the RECEIVER gets back
-	//
-	// Sender should be paloma17nm703yu6vy6jpwn686e5ucal7n4cw8fc6da9ee0ctcwmr9vc9nsr4evrh for
-	// Bonding curve or the other one
-	for _, v := range []string{
-		"wasm._contract_address",
-		"wasm.action",
-		"wasm.sender",
-		"wasm.receiver",
-		"wasm.ask_asset",
-		"wasm.offer_asset",
-		"wasm.offer_amount",
-		"wasm.return_amount",
-	} {
-		i, ok := tx.Data[v]
-		if !ok || len(i) < 1 {
-			return false
-		}
+func consumeEvent(ctx context.Context,
+	db bun.Tx,
+	exchangeLkup map[string]model.Exchange,
+	evt types.SwapEvent,
+) error {
+	exchange, ok := exchangeLkup[evt.Sender]
+	if !ok {
+		return fmt.Errorf("sender %s not found in exchange lookup", evt.Sender)
 	}
 
-	return true
+	s0, err := ensureSymbol(ctx, db, evt.OfferAsset)
+	if err != nil {
+		return err
+	}
+	s1, err := ensureSymbol(ctx, db, evt.AskAsset)
+	if err != nil {
+		return err
+	}
+
+	i, err := ensureInstrument(ctx, db, &exchange, s0, s1)
+	if err != nil {
+		return err
+	}
+
+	price := calculatePrice(evt, i, s0, s1)
+	pd := model.PriceData{
+		InstrumentID: i.ID,
+		Time:         evt.Timestamp,
+		Price:        price,
+	}
+
+	// TODO: How do you handle multiple sawps for same pair in one TX?
+	// The first one would insert, the second one would fail.
+	_, err = db.NewInsert().Model(&pd).Exec(ctx)
+	return err
 }
 
-func loadExchangeLkUp(ctx context.Context, db *persistence.Database) (lkup map[string]model.Exchange, err error) {
+func loadExchangeLkUp(ctx context.Context, db *persistence.Database) (map[string]model.Exchange, error) {
 	var exchanges []model.ExchangeLkup
-	if err = db.NewSelect().Model(exchanges).Relation("Exchange").Scan(ctx); err != nil {
+	if err := db.NewSelect().Model(&exchanges).Relation("Exchange").Scan(ctx); err != nil {
 		return nil, fmt.Errorf("failed to fetch exchanges: %w", err)
 	}
 
+	lkup := make(map[string]model.Exchange)
 	for _, v := range exchanges {
 		lkup[v.Address] = *v.Exchange
 	}
 
 	return lkup, nil
+}
+
+func ensureSymbol(ctx context.Context, db bun.Tx, s string) (*model.Symbol, error) {
+	var symbol model.Symbol
+	if err := db.NewSelect().Model(&symbol).Where("id = ?", s).Scan(ctx); err != nil {
+		if err != sql.ErrNoRows {
+			return nil, fmt.Errorf("failed to fetch symbol: %w", err)
+		}
+		sy, err := types.SymbolFromTokenDenom(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse symbol: %w", err)
+		}
+		symbol = model.Symbol{ID: s, DisplayName: sy.String()}
+		if _, err := db.NewInsert().Model(&symbol).Exec(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	return &symbol, nil
+}
+
+func ensureInstrument(ctx context.Context, db bun.Tx, exchange *model.Exchange, s0, s1 *model.Symbol) (*model.Instrument, error) {
+	if s0.ID == s1.ID {
+		return nil, fmt.Errorf("symbols are identical")
+	}
+
+	// Ensure s0_id < s1_id to prevent double identity for same instrument
+	sids := []string{s0.ID, s1.ID}
+	slices.Sort(sids)
+
+	var instrument model.Instrument
+	stmt := db.NewSelect().Model(&instrument).
+		Where("? = ?", bun.Ident("exchange_id"), exchange.ID).
+		Where("? = ?", bun.Ident("symbol0_id"), sids[0]).
+		Where("? = ?", bun.Ident("symbol1_id"), sids[1])
+
+	if err := stmt.Scan(ctx); err != nil {
+		if err != sql.ErrNoRows {
+			return nil, fmt.Errorf("failed to fetch instrument: %w", err)
+		}
+
+		ms0, err := types.SymbolFromTokenDenom(sids[0])
+		if err != nil {
+			return nil, err
+		}
+		ms1, err := types.SymbolFromTokenDenom(sids[1])
+		if err != nil {
+			return nil, err
+		}
+		iv := types.NewInstrument(ms0, ms1, exchange.Name)
+		instrument = model.Instrument{
+			Name:        iv.FullName(),
+			ShortName:   iv.Name(),
+			DisplayName: iv.Name(),
+			Description: fmt.Sprintf("%s: [%s,%s]", exchange.Name, sids[0], sids[1]),
+			ExchangeID:  exchange.ID,
+			Symbol0ID:   sids[0],
+			Symbol1ID:   sids[1],
+		}
+		if _, err := db.NewInsert().Model(&instrument).Exec(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	return &instrument, nil
+}
+
+func calculatePrice(evt types.SwapEvent, i *model.Instrument, s0, s1 *model.Symbol) float64 {
+	a := evt.OfferAmount.Uint64()
+	b := evt.ReturnAmount.Uint64()
+
+	// this is to know how much for 1b
+	price := float64(a) / float64(b)
+	if i.Symbol0ID != s0.ID {
+		price = 1 / price
+	}
+
+	return price
 }
