@@ -28,7 +28,7 @@ func (i Instrument) FullName() string {
 }
 
 func (i Instrument) Invert() Instrument {
-	return Instrument(fmt.Sprintf("%s:%s/%s", i.Exchange(), i.Base(), i.Quote()))
+	return Instrument(fmt.Sprintf("%s:%s/%s", i.Exchange(), i.Quote(), i.Base()))
 }
 
 func NewInstrument(base, quote Symbol, exchange string) Instrument {

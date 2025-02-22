@@ -18,7 +18,7 @@ func TestFromTokenDenom(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := FromTokenDenom(test.input)
+		result, err := SymbolFromTokenDenom(test.input)
 		if (err != nil) != test.err {
 			t.Errorf("FromTokenDenom(%q) error = %v, expected error = %v", test.input, err, test.err)
 		}
