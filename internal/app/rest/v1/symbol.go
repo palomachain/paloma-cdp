@@ -16,7 +16,7 @@ import (
 
 type symbolInput struct {
 	// Should be kept at 2x max length of token
-	Name string   `path:"name" required:"true" minLength:"3" maxLength:"256"`
+	Name string   `path:"name" required:"true" minLength:"3" maxLength:"256" pattern:"^[\\S]{3,44}-[[:alnum:]]{6}\\/[\\S]{3,44}-[[:alnum:]]{6}$"`
 	_    struct{} `query:"_" cookie:"_" additionalProperties:"false"`
 }
 

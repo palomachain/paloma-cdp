@@ -17,7 +17,7 @@ import (
 
 type barsInput struct {
 	// Should be kept at 2x max length of token
-	SymbolName string   `path:"name" minLength:"6" maxLength:"256" required:"true"`
+	SymbolName string   `path:"name" minLength:"6" maxLength:"256" required:"true" pattern:"^(DEX|BONDING):[\\S]{3,44}-[[:alnum:]]{6}\\/[\\S]{3,44}-[[:alnum:]]{6}$"`
 	Resolution string   `query:"resolution" required:"true" enum:"1S,2S,5S,1,2,5,60,120,300,1D,2D,1W,2W,1M,2M,3M"`
 	Gte        int64    `query:"gte" required:"true" minimum:"0"`
 	Lt         int64    `query:"lt" required:"true" minimum:"0"`
@@ -47,20 +47,6 @@ func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
 		"2M":  "2 month",
 		"3M":  "3 month",
 	}
-	// SELECT
-	//   exchange_id,
-	//   time_bucket('1 second', time) AS bucket,
-	//   min(price) AS low,
-	//   max(price) as high,
-	//   first(price,time) as open,
-	//   last(price,time) as close
-	// FROM price_data
-	// WHERE
-	//   symbol_id=16
-	//   AND time > '2025-01-23'
-	//   AND time <= '2025-01-25'
-	// GROUP BY exchange_id,bucket
-	// ORDER BY exchange_id ASC, bucket ASC;
 	u := usecase.NewInteractor(func(ctx context.Context, input barsInput, output *barsOutput) error {
 		name, err := url.QueryUnescape(input.SymbolName)
 		if err != nil {
