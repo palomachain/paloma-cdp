@@ -2,10 +2,14 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
+	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
+	"github.com/palomachain/paloma-cdp/internal/pkg/model"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -20,16 +24,8 @@ type barsInput struct {
 	_          struct{} `query:"_" cookie:"_" additionalProperties:"false"`
 }
 
-type bar struct {
-	Time   int     `json:"time"`
-	Close  float64 `json:"close"`
-	High   float64 `json:"high"`
-	Low    float64 `json:"low"`
-	Open   float64 `json:"open"`
-	Volume float64 `json:"volume"`
-}
 type barsOutput struct {
-	Bars []bar `json:"bars"`
+	Bars []model.Bar `json:"bars"`
 }
 
 func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
@@ -76,16 +72,42 @@ func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
 		if !ok {
 			return status.Wrap(errors.New("invalid resolution"), status.InvalidArgument)
 		}
-		output.Bars = []bar{
-			{
-				Time:   1234567890,
-				Close:  123.45,
-				High:   123.45,
-				Low:    123.45,
-				Open:   123.45,
-				Volume: 123.45,
-			},
+
+		stmt := db.NewRaw(
+			`SELECT
+        time_bucket(?, p.time) AS bucket,
+        min(p.price) AS low,
+        max(p.price) as high,
+        first(p.price,p.time) as open,
+        last(p.price,p.time) as close
+      FROM price_data p JOIN instruments i on p.instrument_id=i.id
+      WHERE
+        i.name=?
+        AND p.time > ?
+        AND p.time <= ?
+	    GROUP BY bucket
+      ORDER BY bucket ASC
+      `,
+			resolution,
+			name,
+			gte,
+			lt,
+		)
+
+		var bars []model.Bar
+		err = stmt.Scan(ctx, &bars)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return status.Wrap(fmt.Errorf("unknown instrument"), status.NotFound)
+			}
+			liblog.WithError(ctx, err, "Failed to scan bars.")
+			return status.Internal
 		}
+		if bars == nil {
+			return status.Wrap(fmt.Errorf("unknown instrument"), status.NotFound)
+		}
+
+		output.Bars = bars
 		return nil
 	})
 
