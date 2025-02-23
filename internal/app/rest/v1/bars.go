@@ -2,10 +2,14 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
+	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
+	"github.com/palomachain/paloma-cdp/internal/pkg/model"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
@@ -13,23 +17,15 @@ import (
 
 type barsInput struct {
 	// Should be kept at 2x max length of token
-	SymbolName string   `path:"name" minLength:"6" maxLength:"256" required:"true"`
+	SymbolName string   `path:"name" minLength:"6" maxLength:"256" required:"true" pattern:"^(DEX|BONDING):[\\S]{3,44}-[[:alnum:]]{6}\\/[\\S]{3,44}-[[:alnum:]]{6}$"`
 	Resolution string   `query:"resolution" required:"true" enum:"1S,2S,5S,1,2,5,60,120,300,1D,2D,1W,2W,1M,2M,3M"`
 	Gte        int64    `query:"gte" required:"true" minimum:"0"`
 	Lt         int64    `query:"lt" required:"true" minimum:"0"`
 	_          struct{} `query:"_" cookie:"_" additionalProperties:"false"`
 }
 
-type bar struct {
-	Time   int     `json:"time"`
-	Close  float64 `json:"close"`
-	High   float64 `json:"high"`
-	Low    float64 `json:"low"`
-	Open   float64 `json:"open"`
-	Volume float64 `json:"volume"`
-}
 type barsOutput struct {
-	Bars []bar `json:"bars"`
+	Bars []model.Bar `json:"bars"`
 }
 
 func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
@@ -51,20 +47,6 @@ func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
 		"2M":  "2 month",
 		"3M":  "3 month",
 	}
-	// SELECT
-	//   exchange_id,
-	//   time_bucket('1 second', time) AS bucket,
-	//   min(price) AS low,
-	//   max(price) as high,
-	//   first(price,time) as open,
-	//   last(price,time) as close
-	// FROM price_data
-	// WHERE
-	//   symbol_id=16
-	//   AND time > '2025-01-23'
-	//   AND time <= '2025-01-25'
-	// GROUP BY exchange_id,bucket
-	// ORDER BY exchange_id ASC, bucket ASC;
 	u := usecase.NewInteractor(func(ctx context.Context, input barsInput, output *barsOutput) error {
 		name, err := url.QueryUnescape(input.SymbolName)
 		if err != nil {
@@ -76,16 +58,42 @@ func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
 		if !ok {
 			return status.Wrap(errors.New("invalid resolution"), status.InvalidArgument)
 		}
-		output.Bars = []bar{
-			{
-				Time:   1234567890,
-				Close:  123.45,
-				High:   123.45,
-				Low:    123.45,
-				Open:   123.45,
-				Volume: 123.45,
-			},
+
+		stmt := db.NewRaw(
+			`SELECT
+        time_bucket(?, p.time) AS bucket,
+        min(p.price) AS low,
+        max(p.price) as high,
+        first(p.price,p.time) as open,
+        last(p.price,p.time) as close
+      FROM price_data p JOIN instruments i on p.instrument_id=i.id
+      WHERE
+        i.name=?
+        AND p.time > ?
+        AND p.time <= ?
+	    GROUP BY bucket
+      ORDER BY bucket ASC
+      `,
+			resolution,
+			name,
+			gte,
+			lt,
+		)
+
+		var bars []model.Bar
+		err = stmt.Scan(ctx, &bars)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return status.Wrap(fmt.Errorf("unknown instrument"), status.NotFound)
+			}
+			liblog.WithError(ctx, err, "Failed to scan bars.")
+			return status.Internal
 		}
+		if bars == nil {
+			return status.Wrap(fmt.Errorf("unknown instrument"), status.NotFound)
+		}
+
+		output.Bars = bars
 		return nil
 	})
 

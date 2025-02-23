@@ -1,6 +1,8 @@
 package model
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/cometbft/cometbft/types"
@@ -60,4 +62,24 @@ type RawTransaction struct {
 	Hash      string            `bun:"tx_hash,pk"`
 	Data      types.EventDataTx `bun:",notnull,msgpack"`
 	Timestamp time.Time         `bun:"received,notnull,default:current_timestamp"`
+}
+
+type Bar struct {
+	Time   int64     `json:"time" bun:"-"`
+	Bucket time.Time `json:"-"`
+	Close  float64   `json:"close"`
+	High   float64   `json:"high"`
+	Low    float64   `json:"low"`
+	Open   float64   `json:"open"`
+	Volume float64   `json:"volume"`
+}
+
+var _ bun.AfterScanRowHook = (*Bar)(nil)
+
+func (m *Bar) AfterScanRow(ctx context.Context) error {
+	if m == nil {
+		return fmt.Errorf("AfterScanRowHook called on nil value")
+	}
+	m.Time = m.Bucket.Unix()
+	return nil
 }
