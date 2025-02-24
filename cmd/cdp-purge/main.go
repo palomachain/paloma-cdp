@@ -12,6 +12,8 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 )
 
+var version = service.DefaultVersion()
+
 func main() {
 	os.Setenv("CDP_PSQL_ADDRESS", "localhost:5432")
 	os.Setenv("CDP_PSQL_USER", "cdp")
@@ -20,6 +22,7 @@ func main() {
 
 	svc := service.New[struct{}]().
 		WithName("cdp-purge").
+		WithVersion(version).
 		WithDatabase()
 
 	if err := svc.RunWithPersistence(run); err != nil {
@@ -28,9 +31,9 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, db *persistence.Database, _ *struct{}) error {
+func run(ctx context.Context, v service.Version, db *persistence.Database, _ *struct{}) error {
 	threshold := time.Now().Add(-time.Hour * 24 * 7)
-	slog.Default().InfoContext(ctx, "Purging stale data.", "threshold", threshold)
+	slog.Default().InfoContext(ctx, "Purging stale data.", "threshold", threshold, "version", v)
 
 	r, err := db.NewDelete().Model(&model.PriceData{}).Where("time < ?", threshold).Exec(ctx)
 	if err != nil {

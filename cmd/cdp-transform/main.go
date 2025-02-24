@@ -8,6 +8,8 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 )
 
+var version = service.DefaultVersion()
+
 func main() {
 	os.Setenv("CDP_PSQL_ADDRESS", "localhost:5432")
 	os.Setenv("CDP_PSQL_USER", "cdp")
@@ -16,6 +18,7 @@ func main() {
 
 	svc := service.New[transform.Configuration]().
 		WithName("cdp-transform").
+		WithVersion(version).
 		WithDatabase()
 
 	if err := svc.RunWithPersistence(transform.Run); err != nil {

@@ -10,6 +10,7 @@ import (
 	v1 "github.com/palomachain/paloma-cdp/internal/app/rest/v1"
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
+	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/rest/web"
@@ -23,6 +24,7 @@ type Configuration struct {
 
 func Run(
 	ctx context.Context,
+	v service.Version,
 	db *persistence.Database,
 	cfg *Configuration,
 ) error {
@@ -30,7 +32,7 @@ func Run(
 
 	s.OpenAPISchema().SetTitle("Paloma Chain Data Provider - REST API")
 	s.OpenAPISchema().SetDescription("This API grants access to live and historic chain data from Paloma. The initial feature set was built to satisfy charting solutions, but may be extended in the future.")
-	s.OpenAPISchema().SetVersion("v1.0.0")
+	s.OpenAPISchema().SetVersion(v.Main)
 
 	s.Wrap(
 		gzip.Middleware,
@@ -51,7 +53,7 @@ func Run(
 	binding := fmt.Sprintf("%s:%s", cfg.HttpHost, cfg.HttpPort)
 	srv := http.Server{Addr: binding, Handler: s}
 
-	slog.Default().InfoContext(ctx, "Service running.", "binding", binding)
+	slog.Default().InfoContext(ctx, "Service running.", "binding", binding, "version", v)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			if err != http.ErrServerClosed {

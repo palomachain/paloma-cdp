@@ -10,6 +10,7 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/model"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
+	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -23,6 +24,7 @@ type Configuration struct {
 
 func Run(
 	ctx context.Context,
+	v service.Version,
 	db *persistence.Database,
 	cfg *Configuration,
 ) error {
@@ -44,7 +46,7 @@ func Run(
 		return err
 	}
 
-	slog.Default().InfoContext(ctx, "Service running.", "query", cfg.Query)
+	slog.Default().InfoContext(ctx, "Service running.", "query", cfg.Query, "version", v)
 	for {
 		select {
 		case <-ctx.Done():
@@ -55,13 +57,12 @@ func Run(
 				liblog.WithError(ctx, err, "Failed to handle tx", "events", tx.Events)
 			}
 		case <-tk.C:
-			if !client.WSEvents.IsRunning() {
-				// TODO: Do we need to subscribe again now?
+			if !client.IsRunning() {
 				slog.Default().WarnContext(ctx, "WSEvents not running. Trying to recover...")
 				if err := client.Reset(); err != nil {
 					liblog.WithError(ctx, err, "Failed to reset WS connection.")
 				}
-				if client.WSEvents.IsRunning() {
+				if client.IsRunning() {
 					slog.Default().InfoContext(ctx, "WSEvents recovered. Do we need to subscribe again?")
 				}
 			}
