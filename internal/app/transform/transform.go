@@ -11,6 +11,7 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/model"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
+	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 	"github.com/palomachain/paloma-cdp/internal/pkg/types"
 	"github.com/uptrace/bun"
 )
@@ -27,10 +28,11 @@ var gLkUp map[string]model.Exchange
 
 func Run(
 	ctx context.Context,
+	v service.Version,
 	db *persistence.Database,
 	cfg *Configuration,
 ) error {
-	slog.Default().InfoContext(ctx, "Service running.")
+	slog.Default().InfoContext(ctx, "Service running.", "version", v)
 
 	var err error
 	gLkUp, err = loadExchangeLkUp(ctx, db)
@@ -38,7 +40,7 @@ func Run(
 		return fmt.Errorf("failed to load exchange lookup: %w", err)
 	}
 
-	// TODO: When and HOW to recover from a panic?
+	// TODO: When and HOW do we recover from a panic?
 
 	tkr := time.NewTicker(cfg.PollingInterval)
 	for {

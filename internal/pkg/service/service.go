@@ -14,17 +14,34 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 )
 
-type PersistenceRunner[T any] func(context.Context, *persistence.Database, *T) error
+type PersistenceRunner[T any] func(context.Context, Version, *persistence.Database, *T) error
 
-type ConfigurationType any
+type Version struct {
+	Main   string
+	Date   string
+	Suffix string
+}
 
-type Shell[T ConfigurationType] struct {
+func DefaultVersion() Version {
+	return Version{
+		Main:   "0.0.0",
+		Date:   time.Now().Format(time.RFC3339),
+		Suffix: "dev",
+	}
+}
+
+func (v *Version) String() string {
+	return fmt.Sprintf("%s-%s (%s)", v.Main, v.Suffix, v.Date)
+}
+
+type Shell[T any] struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 	db        *persistence.Database
+	version   Version
 }
 
-func New[T ConfigurationType]() *Shell[T] {
+func New[T any]() *Shell[T] {
 	liblog.Configure()
 	ctx, fn := context.WithCancel(context.Background())
 	return &Shell[T]{
@@ -35,6 +52,11 @@ func New[T ConfigurationType]() *Shell[T] {
 
 func (s *Shell[T]) WithName(name string) *Shell[T] {
 	s.ctx = liblog.HydrateServiceName(s.ctx, name)
+	return s
+}
+
+func (s *Shell[T]) WithVersion(v Version) *Shell[T] {
+	s.version = v
 	return s
 }
 
@@ -78,7 +100,7 @@ func (s *Shell[T]) RunWithPersistence(fn PersistenceRunner[T]) error {
 	}
 
 	go func() {
-		errCh <- fn(s.ctx, s.db, svcCfg)
+		errCh <- fn(s.ctx, s.version, s.db, svcCfg)
 	}()
 
 	select {
