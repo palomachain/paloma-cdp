@@ -29,6 +29,10 @@ func New(ctx context.Context, c *Configuration) (*Database, error) {
 	)
 
 	sqldb := sql.OpenDB(pgconn)
+	return FromSqlDB(ctx, sqldb)
+}
+
+func FromSqlDB(ctx context.Context, sqldb *sql.DB) (*Database, error) {
 	db := bun.NewDB(sqldb, pgdialect.New())
 	return &Database{db}, db.Ping()
 }

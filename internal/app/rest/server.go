@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-chi/chi/v5/middleware"
 	v1 "github.com/palomachain/paloma-cdp/internal/app/rest/v1"
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
@@ -27,10 +28,9 @@ func Run(
 ) error {
 	s := web.NewService(openapi31.NewReflector())
 
-	// Init API documentation schema.
-	s.OpenAPISchema().SetTitle("Basic Example")
-	s.OpenAPISchema().SetDescription("This app showcases a trivial REST API.")
-	s.OpenAPISchema().SetVersion("v1.2.3")
+	s.OpenAPISchema().SetTitle("Paloma Chain Data Provider - REST API")
+	s.OpenAPISchema().SetDescription("This API grants access to live and historic chain data from Paloma. The initial feature set was built to satisfy charting solutions, but may be extended in the future.")
+	s.OpenAPISchema().SetVersion("v1.0.0")
 
 	s.Wrap(
 		gzip.Middleware,
@@ -38,24 +38,20 @@ func Run(
 
 	s.Use(
 		liblog.Middleware("cdp-rest"),
+		middleware.StripSlashes,
 	)
 
-	// Add use case handler to router.
+	s.Get("/api/health", HealthInteractor())
 	s.Get("/api/v1/symbol/{name}", v1.SymbolInteractor(ctx, db))
 	s.Get("/api/v1/symbol/{name}/bars", v1.BarsInteractor(db))
 	s.Get("/api/v1/symbols", v1.SymbolsInteractor(ctx, db))
 
-	// Swagger UI endpoint at /docs.
 	s.Docs("/docs", swgui.New)
 
-	// Start server.
 	binding := fmt.Sprintf("%s:%s", cfg.HttpHost, cfg.HttpPort)
-	srv := http.Server{
-		Addr:    binding,
-		Handler: s,
-	}
-	slog.Default().InfoContext(ctx, "Service running.", "binding", binding)
+	srv := http.Server{Addr: binding, Handler: s}
 
+	slog.Default().InfoContext(ctx, "Service running.", "binding", binding)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			if err != http.ErrServerClosed {
