@@ -16,11 +16,10 @@ import (
 )
 
 type barsInput struct {
-	// Should be kept at 2x max length of token
-	SymbolName string   `path:"name" minLength:"6" maxLength:"256" required:"true" pattern:"^(DEX|BONDING):[\\S]{3,44}-[[:alnum:]]{6}\\/[\\S]{3,44}-[[:alnum:]]{6}$"`
-	Resolution string   `query:"resolution" required:"true" enum:"1S,2S,5S,1,2,5,60,120,300,1D,2D,1W,2W,1M,2M,3M"`
-	Gte        int64    `query:"gte" required:"true" minimum:"0"`
-	Lt         int64    `query:"lt" required:"true" minimum:"0"`
+	SymbolName string   `path:"name" required:"true" pattern:"^(DEX|BONDING):\\S{3,44}-[a-z0-9]{6}/\\S{3,44}-[a-z0-9]{6}$" description:"Full symbol name, including leading exchange name." example:"BONDING:UPUSD-19nr9t/MTT.0-1wff3z"`
+	Resolution string   `query:"resolution" required:"true" enum:"1S,2S,5S,1,2,5,60,120,300,1D,2D,1W,2W,1M,2M,3M" description:"Resolution of the symbol"`
+	Gte        int64    `query:"gte" required:"true" minimum:"0" description:"Unix timestamp (leftmost requested bar)"`
+	Lt         int64    `query:"lt" required:"true" minimum:"0" description:"Unix timestamp (rightmost requested bar - not inclusive)"`
 	_          struct{} `query:"_" cookie:"_" additionalProperties:"false"`
 }
 
@@ -54,6 +53,9 @@ func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
 		}
 		gte := time.Unix(input.Gte, 0)
 		lt := time.Unix(input.Lt, 0)
+		if lt.Before(gte) {
+			return status.Wrap(errors.New("lt must be greater than gte"), status.InvalidArgument)
+		}
 		resolution, ok := timeBcketMapping[input.Resolution]
 		if !ok {
 			return status.Wrap(errors.New("invalid resolution"), status.InvalidArgument)
@@ -97,11 +99,10 @@ func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
 		return nil
 	})
 
-	// TODO: Fill
-	u.SetTitle("Search Symbols")
-	u.SetDescription("Search for a few symbols.")
-
-	u.SetExpectedErrors(status.InvalidArgument)
+	u.SetTitle("Get Bars")
+	u.SetDescription("Returns a set of bars for a given symbol.")
+	u.SetExpectedErrors(status.InvalidArgument, status.NotFound)
+	u.SetTags(cTagAdvancedCharts)
 
 	return u.IOInteractor
 }

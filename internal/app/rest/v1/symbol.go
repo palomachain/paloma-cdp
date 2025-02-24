@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"database/sql"
-	"log/slog"
 	"net/url"
 
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
@@ -15,8 +14,7 @@ import (
 )
 
 type symbolInput struct {
-	// Should be kept at 2x max length of token
-	Name string   `path:"name" required:"true" minLength:"3" maxLength:"256" pattern:"^[\\S]{3,44}-[[:alnum:]]{6}\\/[\\S]{3,44}-[[:alnum:]]{6}$"`
+	Name string   `path:"name" required:"true" pattern:"^(DEX|BONDING):\\S{3,44}-[a-z0-9]{6}/\\S{3,44}-[a-z0-9]{6}$" description:"Full symbol name"`
 	_    struct{} `query:"_" cookie:"_" additionalProperties:"false"`
 }
 
@@ -63,7 +61,6 @@ func SymbolInteractor(ctx context.Context, db *persistence.Database) usecase.IOI
 			return status.Wrap(err, status.InvalidArgument)
 		}
 
-		slog.Default().InfoContext(ctx, "Loading instrument", "name", name)
 		var m model.Instrument
 		if err := db.NewSelect().
 			Model(&m).
@@ -73,7 +70,7 @@ func SymbolInteractor(ctx context.Context, db *persistence.Database) usecase.IOI
 			if err == sql.ErrNoRows {
 				return status.NotFound
 			}
-			liblog.WithError(ctx, err, "Failed to load instrument.")
+			liblog.WithError(ctx, err, "Failed to load instrument.", "symbolName", input.Name)
 			return status.Internal
 		}
 
@@ -95,11 +92,10 @@ func SymbolInteractor(ctx context.Context, db *persistence.Database) usecase.IOI
 		return nil
 	})
 
-	// TODO: Set proper description
-	u.SetTitle("Lookup symbol")
-	u.SetDescription("Looks up a symbol yo.")
-
-	u.SetExpectedErrors(status.InvalidArgument)
+	u.SetTitle("Resolve Symbol")
+	u.SetDescription("Look up the full definition of a symbol.")
+	u.SetExpectedErrors(status.InvalidArgument, status.NotFound, status.Internal)
+	u.SetTags(cTagAdvancedCharts)
 
 	return u.IOInteractor
 }

@@ -7,6 +7,10 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 )
 
+const (
+	cTagAdvancedCharts string = "Advanced Charts"
+)
+
 type lkup struct {
 	byName map[string]int64
 	byID   map[int64]string

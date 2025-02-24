@@ -27,18 +27,18 @@ const (
 )
 
 type symbolsInput struct {
-	UserInput  string   `query:"input" required:"true" minLength:"3" maxLength:"128"`
-	Exchange   *string  `query:"exchange" enum:"DEX,BONDING"`
-	SymbolType *string  `query:"type" pattern:"^crypto$" enum:"crypto"`
+	UserInput  string   `query:"input" required:"true" minLength:"3" maxLength:"128" description:"User input to search for."`
+	Exchange   *string  `query:"exchange" enum:"DEX,BONDING" description:"The requested exchange. Empty value means no filter was specified"`
+	SymbolType *string  `query:"type" pattern:"^crypto$" enum:"crypto" description:"The requested symbol type. Empty value means no filter was specified"`
 	_          struct{} `query:"_" cookie:"_" additionalProperties:"false"`
 }
 
 type symbol struct {
-	Description string `json:"description"`
-	Exchange    string `json:"exchange"`
-	Symbol      string `json:"symbol"`
-	Ticker      string `json:"ticker"`
-	Type        string `json:"type"`
+	Description string `json:"description" description:"The description."`
+	Exchange    string `json:"exchange" description:"The exchange name."`
+	Symbol      string `json:"symbol" description:"Short symbol name."`
+	Ticker      string `json:"ticker" description:"Unique identifier for the symbol, same as Symbol field."`
+	Type        string `json:"type" description:"The symbol type." enum:"crypto"`
 }
 type symbolsOutput struct {
 	Symbols []symbol `json:"symbols"`
@@ -78,7 +78,7 @@ func SymbolsInteractor(ctx context.Context, db *persistence.Database) usecase.IO
 			symbols[i] = symbol{
 				Description: v.Description,
 				Exchange:    lkup.byID[v.ExchangeID],
-				Symbol:      v.DisplayName,
+				Symbol:      v.Name,
 				Ticker:      v.ShortName,
 				Type:        cSymbolTypeCrypto,
 			}
@@ -89,9 +89,9 @@ func SymbolsInteractor(ctx context.Context, db *persistence.Database) usecase.IO
 	})
 
 	u.SetTitle("Search Symbols")
-	u.SetDescription("Search for a few symbols.")
-
-	u.SetExpectedErrors(status.InvalidArgument)
+	u.SetDescription("Provides a list of symbols that match the user's search query.")
+	u.SetExpectedErrors(status.InvalidArgument, status.Internal)
+	u.SetTags(cTagAdvancedCharts)
 
 	return u.IOInteractor
 }

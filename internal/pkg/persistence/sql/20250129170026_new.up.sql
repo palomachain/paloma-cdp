@@ -63,5 +63,6 @@ SELECT add_compression_policy('price_data', INTERVAL '7 days');
 
 --bun:split
 INSERT INTO exchanges (id, name) VALUES (1, 'BONDING'), (2, 'DEX');
-INSERT INTO exchange_lkup (address, exchange_id) VALUES ('paloma17nm703yu6vy6jpwn686e5ucal7n4cw8fc6da9ee0ctcwmr9vc9nsr4evrh', 1);
+INSERT INTO exchange_lkup (address, exchange_id) VALUES ('paloma1sa98jmf6k2mvgyz8wus96agkn7c85tuc77uslhj0ph26scs0hzks5wfrrm', 1);
 INSERT INTO exchange_lkup (address, exchange_id) VALUES ('paloma1j76m8d04ctlqn4ll37a3453grw6gpxtgv06v76m3yxxmenfnkjxsh8u3x3', 2);
+
