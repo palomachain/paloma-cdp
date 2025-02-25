@@ -1,0 +1,6 @@
+FROM alpine:3.21 as artifact
+ARG BINARY
+ENV BINARY ${BINARY}
+WORKDIR /app
+COPY ./bin/$BINARY .
+CMD "./"$BINARY

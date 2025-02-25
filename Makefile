@@ -1,21 +1,42 @@
 #!/usr/bin/make -f
 
-.PHONY: install build run graphql environment-up environment-down test
+.PHONY: install build-% docker-% graphql environment-up environment-down test
 
-BINARY_NAME=svccdp
+BINARY_PREFIX=cdp-
 BUILD_DIR=./bin
 TARGET_OS=linux
 TARGET_ARCH=amd64
 ENV=CGO_ENABLED=0
+VERSION=$(shell git describe --tags --always --dirty)
+
+all: build-ingest build-migrate build-purge build-rest build-transform
 
 install:
 	@go mod tidy
 
-build:
-	@$(ENV) GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/server 
+build-%:
+	@echo "Building $(BINARY_PREFIX)$*"
+	@$(ENV) GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go build \
+		-ldflags "-s -w -X main.version=$(VERSION)" \
+		-o $(BUILD_DIR)/$(BINARY_PREFIX)$* \
+		./cmd/$(BINARY_PREFIX)$*
 
-run: build
-	@$(BUILD_DIR)/$(BINARY_NAME)
+docker-%: build-%
+	@echo "Building docker image for $(BINARY_PREFIX)$*"
+	@DOCKER_BUILDKIT=1 docker build \
+		--target artifact \
+		--build-arg BINARY=$(BINARY_PREFIX)$* \
+		-t palomachain/$(BINARY_PREFIX)$*:local \
+		-f build/package/Dockerfile \
+		.
+
+	@DOCKER_BUILDKIT=1 docker build \
+	-f build/package/Dockerfile \
+	--target artifact \
+	--build-arg BINARY=$* \
+	-t vc/$*:local \
+	.
+	@rm -rf ./bin
 
 graphql:
 	@go generate ./...
@@ -27,4 +48,4 @@ environment-down:
 	docker compose -f test/build/docker-compose.yml down --volumes
 
 test:
-	@go test ./...
+	@gotestsum test ./...

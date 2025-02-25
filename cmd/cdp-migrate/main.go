@@ -10,7 +10,7 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 )
 
-var version = service.DefaultVersion()
+var version string = "dev"
 
 func main() {
 	os.Setenv("CDP_PSQL_ADDRESS", "localhost:5432")
@@ -29,7 +29,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, v service.Version, db *persistence.Database, _ *struct{}) error {
+func run(ctx context.Context, v string, db *persistence.Database, _ *struct{}) error {
 	slog.Default().InfoContext(ctx, "Service running.", "version", v)
 	if err := db.Migrate(ctx); err != nil {
 		liblog.WithError(ctx, err, "Failed to migrate database, manual intervention required!")

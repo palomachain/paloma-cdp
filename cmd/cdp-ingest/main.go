@@ -8,7 +8,7 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 )
 
-var version = service.DefaultVersion()
+var version string = "dev"
 
 func main() {
 	os.Setenv("CDP_PALOMA_RPC_ADDRESS", "https://rpc.palomachain.com:443")

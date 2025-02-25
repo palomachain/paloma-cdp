@@ -10,7 +10,6 @@ import (
 	v1 "github.com/palomachain/paloma-cdp/internal/app/rest/v1"
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
-	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/rest/web"
@@ -24,7 +23,7 @@ type Configuration struct {
 
 func Run(
 	ctx context.Context,
-	v service.Version,
+	v string,
 	db *persistence.Database,
 	cfg *Configuration,
 ) error {
@@ -32,7 +31,7 @@ func Run(
 
 	s.OpenAPISchema().SetTitle("Paloma Chain Data Provider - REST API")
 	s.OpenAPISchema().SetDescription("This API grants access to live and historic chain data from Paloma. The initial feature set was built to satisfy charting solutions, but may be extended in the future.")
-	s.OpenAPISchema().SetVersion(v.Main)
+	s.OpenAPISchema().SetVersion(v)
 
 	s.Wrap(
 		gzip.Middleware,
