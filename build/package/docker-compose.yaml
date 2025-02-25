@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg17
+    command: postgres -c max_connections=100 -c shared_buffers=4096MB
+    restart: always
+    environment:
+      POSTGRES_DB: cdp
+      POSTGRES_USER: cdp
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./env/postgres.env
+      - ./env/postgres.local.env
+  rest:
+    image: palomachain/cdp-rest:local
+    ports:
+      - "8011:8011"
+    env_file:
+      - ./env/rest.env
+      - ./env/rest.local.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8011/api/health"]
+      interval: 5s
+      timeout: 1s
+      retries: 3
+      start_period: 10s

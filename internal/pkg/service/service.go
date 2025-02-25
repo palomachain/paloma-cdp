@@ -14,31 +14,13 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 )
 
-type PersistenceRunner[T any] func(context.Context, Version, *persistence.Database, *T) error
-
-type Version struct {
-	Main   string
-	Date   string
-	Suffix string
-}
-
-func DefaultVersion() Version {
-	return Version{
-		Main:   "0.0.0",
-		Date:   time.Now().Format(time.RFC3339),
-		Suffix: "dev",
-	}
-}
-
-func (v *Version) String() string {
-	return fmt.Sprintf("%s-%s (%s)", v.Main, v.Suffix, v.Date)
-}
+type PersistenceRunner[T any] func(context.Context, string, *persistence.Database, *T) error
 
 type Shell[T any] struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 	db        *persistence.Database
-	version   Version
+	version   string
 }
 
 func New[T any]() *Shell[T] {
@@ -55,7 +37,7 @@ func (s *Shell[T]) WithName(name string) *Shell[T] {
 	return s
 }
 
-func (s *Shell[T]) WithVersion(v Version) *Shell[T] {
+func (s *Shell[T]) WithVersion(v string) *Shell[T] {
 	s.version = v
 	return s
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 )
 
-var version = service.DefaultVersion()
+var version string = "dev"
 
 func main() {
 	os.Setenv("CDP_PSQL_ADDRESS", "localhost:5432")

@@ -10,7 +10,6 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/model"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
-	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -24,7 +23,7 @@ type Configuration struct {
 
 func Run(
 	ctx context.Context,
-	v service.Version,
+	v string,
 	db *persistence.Database,
 	cfg *Configuration,
 ) error {

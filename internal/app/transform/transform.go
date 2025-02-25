@@ -11,7 +11,6 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/model"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
-	"github.com/palomachain/paloma-cdp/internal/pkg/service"
 	"github.com/palomachain/paloma-cdp/internal/pkg/types"
 	"github.com/uptrace/bun"
 )
@@ -28,7 +27,7 @@ var gLkUp map[string]model.Exchange
 
 func Run(
 	ctx context.Context,
-	v service.Version,
+	v string,
 	db *persistence.Database,
 	cfg *Configuration,
 ) error {
