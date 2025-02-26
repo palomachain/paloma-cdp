@@ -7,13 +7,12 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
-	"github.com/palomachain/paloma-cdp/internal/pkg/model"
-	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
-
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
+	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
+	"github.com/palomachain/paloma-cdp/internal/pkg/model"
+	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 )
 
 type Configuration struct {
@@ -108,17 +107,4 @@ func tryGetValue(tx coretypes.ResultEvent, key string) (string, error) {
 		return v[0], nil
 	}
 	return "", fmt.Errorf("key %s not found", key)
-}
-
-func _dbg_handleTx(tx coretypes.ResultEvent) {
-	fmt.Printf("Hash: %v\n", tx.Events["tx.hash"][0])
-	fmt.Println("====================")
-	for k, v := range tx.Events {
-		fmt.Printf("%s: %v\n", k, v)
-	}
-	fmt.Println("-----------------")
-	data := tx.Data.(types.EventDataTx)
-	for _, evt := range data.Result.Events {
-		fmt.Printf("%v\n", evt)
-	}
 }

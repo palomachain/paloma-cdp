@@ -23,13 +23,6 @@ func (r *queryResolver) Bars(ctx context.Context, symbolName string, resolution 
 	if len(symbolName) == 0 {
 		return nil, gqlerror.Errorf("symbolName is required")
 	}
-	// // TODO: Extract once the implementation is ready.
-	// expanded := strings.Split(symbolName, ":")
-	// if len(expanded) != 2 {
-	// return nil, gqlerror.Errorf("invalid symbolName format")
-	// }
-	// exchange := expanded[0]
-	// symbol := expanded[1]
 
 	return nil, nil
 }

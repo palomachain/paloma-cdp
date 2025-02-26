@@ -1,8 +1,10 @@
+# Paloma Chain Data Provider
+
+The Paloma Chain Data Provider is a collection of services that ingest, transform and serve data from the [Paloma Chain](https://palomachain.com). It's main intention is the aggregation of swap transactions on the network, with a versatile web API to satisfy the basic requirements of charting solutions, but the project can be extended to support more data sources and use cases in the future.
+
 ## APIs
 
-The default REST API is enabled.
-
-The GraphQL API is present, but not enabled and not maintained at the moment.
+The default REST API is available on `http://localhost:8011/docs` per default. The GraphQL API implementation is still present in part, but not enabled and not maintained at the moment.
 
 ## How to contribute
 
@@ -16,11 +18,11 @@ If you find an Issue that addresses the problem you're having, please add your o
 
 PRs are always welcome and can be a quick way to get your fix or improvement slated for the next release. In general, PRs should:
 
-- Use conventional commits.
+- Consist of [conventional](https://www.conventionalcommits.org/en/v1.0.0/) and [signed](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) commits.
 - Only fix/add the functionality in question **OR** address wide-spread whitespace/style issues, not both.
 - Add unit or integration tests for fixed or changed functionality (if a test suite already exists).
 - Address a single concern in the least number of changed lines as possible.
-- Include documentation in the repo or on our [docs site](https://auth0.com/docs).
+- Include documentation in the repo
 - Be accompanied by a complete Pull Request template (loaded automatically when a PR is created).
 
 For changes that address core functionality or would require breaking changes (e.g. a major release), it's best to open an Issue to discuss your proposal first. This is not required but can save time creating and reviewing changes.
@@ -37,4 +39,9 @@ In general, we follow the ["fork-and-pull" Git workflow](https://github.com/susa
 
 ## Getting Help
 
-Join us in the [Auth0 Community](https://community.auth0.com) and post your question there in the correct category with a descriptive tag.
+We have active, helpful communities on Twitter and Telegram.
+
+- [Twitter](https://twitter.com/paloma_chain)
+- [Telegram](https://t.me/palomachain)
+- [Discord](https://discord.gg/HtUvgxvh5N)
+- [Forum](https://forum.palomachain.com/)

@@ -40,7 +40,6 @@ func Run(
 	}
 
 	// TODO: When and HOW do we recover from a panic?
-
 	tkr := time.NewTicker(cfg.PollingInterval)
 	for {
 		select {
@@ -101,7 +100,6 @@ func consumeTx(ctx context.Context,
 			// Move TX to DLQ and continue normal execution
 			_, err = db.NewInsert().Model(&tx).ModelTableExpr("ingest_dlq").Exec(ctx)
 		}
-		return
 	}()
 
 	evts, err := types.TryParseSwapEvents(ctx, tx.Data.Result.Events)

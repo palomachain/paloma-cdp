@@ -19,7 +19,6 @@ func New(ctx context.Context, c *Configuration) (*Database, error) {
 	pgconn := pgdriver.NewConnector(
 		pgdriver.WithNetwork("tcp"),
 		pgdriver.WithAddr(c.Address),
-		// pgdriver.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
 		pgdriver.WithInsecure(true),
 		pgdriver.WithUser(c.User),
 		pgdriver.WithPassword(c.Password),
