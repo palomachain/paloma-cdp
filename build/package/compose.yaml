@@ -1,0 +1,78 @@
+name: cdp
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg17
+    restart: always
+    profiles: [migration]
+    command: postgres -c max_connections=100 -c shared_buffers=4096MB
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U cdp" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    env_file:
+      - path: ./env/postgres.env
+        required: true
+      - path: ./env/postgres.local.env
+        required: false
+  migrate:
+    image: palomachain/cdp-migrate:local
+    depends_on: [postgres]
+    profiles: [migration]
+    env_file:
+      - path: ./env/persistence.env
+        required: true
+      - path: ./env/persistence.local.env
+        required: false
+  rest:
+    image: palomachain/cdp-rest:local
+    restart: always
+    profiles: [pipeline]
+    ports:
+      - 8011:8011
+    env_file:
+      - path: ./env/persistence.env
+        required: true
+      - path: ./env/persistence.local.env
+        required: false
+      - path: ./env/rest.env
+        required: true
+      - path: ./env/rest.local.env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://rest:8011/api/health"]
+      interval: 5s
+      timeout: 1s
+      retries: 3
+      start_period: 10s
+  ingest:
+    image: palomachain/cdp-ingest:local
+    restart: always
+    profiles: [pipeline]
+    env_file:
+      - path: ./env/persistence.env
+        required: true
+      - path: ./env/persistence.local.env
+        required: false
+      - path: ./env/ingest.env
+        required: true
+      - path: ./env/ingest.local.env
+        required: false
+  transform:
+    image: palomachain/cdp-transform:local
+    restart: always
+    profiles: [pipeline]
+    env_file:
+      - path: ./env/persistence.env
+        required: true
+      - path: ./env/persistence.local.env
+        required: false
+      - path: ./env/transform.env
+        required: true
+      - path: ./env/transform.local.env
+        required: false
+
+volumes:
+  db-data:

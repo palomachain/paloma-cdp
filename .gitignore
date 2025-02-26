@@ -31,3 +31,8 @@ go.work
 # Temporary files
 *.tmp
 
+# Local environment variables
+*.local.env
+
+# Local compose override files
+*.override.yaml
