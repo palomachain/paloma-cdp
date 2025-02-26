@@ -28,6 +28,7 @@ docker-%: build-%
 		--target artifact \
 		--build-arg BINARY=$(BINARY_PREFIX)$* \
 		-t palomachain/$(BINARY_PREFIX)$*:local \
+		-t palomachain/$(BINARY_PREFIX)$*:$(VERSION) \
 		-f build/package/Dockerfile \
 		.
 
