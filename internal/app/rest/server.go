@@ -11,6 +11,7 @@ import (
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 	"github.com/swaggest/openapi-go/openapi31"
+	"github.com/swaggest/rest/nethttp"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/rest/web"
 	swgui "github.com/swaggest/swgui/v5emb"
@@ -20,6 +21,10 @@ type Configuration struct {
 	HttpPort string `env:"CDP_REST_API_PORT" envDefault:"8011"`
 	HttpHost string `env:"CDP_REST_API_HOST" envDefault:"localhost"`
 }
+
+type hack struct{}
+
+func (h hack) ServeHTTP(w http.ResponseWriter, r *http.Request) {}
 
 func Run(
 	ctx context.Context,
@@ -46,8 +51,8 @@ func Run(
 	s.Get("/api/v1/symbol/{name}", v1.SymbolInteractor(ctx, db))
 	s.Get("/api/v1/symbol/{name}/bars", v1.BarsInteractor(db))
 	s.Get("/api/v1/symbols", v1.SymbolsInteractor(ctx, db))
-
-	s.Docs("/docs", swgui.New)
+	s.Method(http.MethodGet, "/hello/{name}", nethttp.NewHandler(v1.SubscribeInteractor(db)))
+	s.Docs("/docs", swgui.New) // Add use case handler to router.
 
 	binding := fmt.Sprintf("%s:%s", cfg.HttpHost, cfg.HttpPort)
 	srv := http.Server{Addr: binding, Handler: s}

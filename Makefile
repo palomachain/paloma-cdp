@@ -11,6 +11,14 @@ VERSION=$(shell git describe --tags --always --dirty)
 
 all: build-ingest build-migrate build-purge build-rest build-transform
 
+include ./build/package/env/persistence.env
+include ./build/package/env/persistence.local.env
+include ./build/package/env/rest.env
+export
+
+run:
+	CDP_PSQL_ADDRESS=localhost:5432 && CDP_REST_API_HOST=localhost go run ./cmd/cdp-rest
+
 install:
 	@go mod tidy
 

@@ -28,24 +28,6 @@ type barsOutput struct {
 }
 
 func BarsInteractor(db *persistence.Database) usecase.IOInteractor {
-	timeBcketMapping := map[string]string{
-		"1S":  "1 second",
-		"2S":  "2 second",
-		"5S":  "5 second",
-		"1":   "1 minute",
-		"2":   "2 minute",
-		"5":   "5 minute",
-		"60":  "1 hour",
-		"120": "2 hour",
-		"300": "5 hour",
-		"1D":  "1 day",
-		"2D":  "2 day",
-		"1W":  "1 week",
-		"2W":  "2 week",
-		"1M":  "1 month",
-		"2M":  "2 month",
-		"3M":  "3 month",
-	}
 	u := usecase.NewInteractor(func(ctx context.Context, input barsInput, output *barsOutput) error {
 		name, err := url.QueryUnescape(input.SymbolName)
 		if err != nil {

@@ -9,6 +9,7 @@ tool github.com/99designs/gqlgen/graphql/introspection
 require (
 	github.com/99designs/gqlgen v0.17.64
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/coder/websocket v1.8.12
 	github.com/cometbft/cometbft v1.0.1
 	github.com/cometbft/cometbft/api v1.0.0
 	github.com/go-chi/chi/v5 v5.2.1
