@@ -21,6 +21,7 @@ build-%:
 		-o $(BUILD_DIR)/$(BINARY_PREFIX)$* \
 		./cmd/$(BINARY_PREFIX)$*
 
+# TODO: Move binary build stage into docker
 docker-%: build-%
 	@echo "Building docker image for $(BINARY_PREFIX)$*"
 	@DOCKER_BUILDKIT=1 docker build \
@@ -29,14 +30,6 @@ docker-%: build-%
 		-t palomachain/$(BINARY_PREFIX)$*:local \
 		-f build/package/Dockerfile \
 		.
-
-	@DOCKER_BUILDKIT=1 docker build \
-	-f build/package/Dockerfile \
-	--target artifact \
-	--build-arg BINARY=$* \
-	-t vc/$*:local \
-	.
-	@rm -rf ./bin
 
 graphql:
 	@go generate ./...
