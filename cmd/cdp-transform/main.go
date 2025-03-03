@@ -13,6 +13,7 @@ var version string = "dev"
 func main() {
 	svc := service.New[transform.Configuration]().
 		WithName("cdp-transform").
+		WithHealthprobe().
 		WithVersion(version).
 		WithDatabase()
 
