@@ -13,6 +13,7 @@ var version string = "dev"
 func main() {
 	svc := service.New[ingest.Configuration]().
 		WithName("cdp-ingest").
+		WithHealthprobe().
 		WithVersion(version).
 		WithDatabase()
 

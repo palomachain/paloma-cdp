@@ -51,6 +51,12 @@ services:
     image: palomachain/cdp-ingest:local
     restart: always
     profiles: [pipeline]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://ingest:8088/healthz"]
+      interval: 5s
+      timeout: 1s
+      retries: 3
+      start_period: 10s
     env_file:
       - path: ./env/persistence.env
         required: true
@@ -64,6 +70,12 @@ services:
     image: palomachain/cdp-transform:local
     restart: always
     profiles: [pipeline]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://transform:8088/healthz"]
+      interval: 5s
+      timeout: 1s
+      retries: 3
+      start_period: 10s
     env_file:
       - path: ./env/persistence.env
         required: true

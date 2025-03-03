@@ -10,6 +10,7 @@ import (
 	"time"
 
 	env "github.com/caarlos0/env/v11"
+	"github.com/palomachain/paloma-cdp/internal/pkg/health"
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
 )
@@ -33,12 +34,23 @@ func New[T any]() *Shell[T] {
 }
 
 func (s *Shell[T]) WithName(name string) *Shell[T] {
+	if s.ctx == nil {
+		panic("log hydration requires fixed context")
+	}
 	s.ctx = liblog.HydrateServiceName(s.ctx, name)
 	return s
 }
 
 func (s *Shell[T]) WithVersion(v string) *Shell[T] {
 	s.version = v
+	return s
+}
+
+func (s *Shell[T]) WithHealthprobe() *Shell[T] {
+	if s.ctx == nil {
+		panic("health probe requires fixed context")
+	}
+	health.StartHealthProbe(s.ctx, ":8088", "/healthz")
 	return s
 }
 
