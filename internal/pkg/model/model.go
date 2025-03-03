@@ -22,6 +22,7 @@ type ExchangeLkup struct {
 	Address    string    `bun:",pk"`
 	ExchangeID int64     `bun:",notnull"`
 	Exchange   *Exchange `bun:"rel:belongs-to,join:exchange_id=id"`
+	DeletedAt  time.Time `bun:",soft_delete,nullzero"`
 }
 
 type Symbol struct {
