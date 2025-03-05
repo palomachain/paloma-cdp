@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,10 +16,11 @@ import (
 )
 
 type subscribeInput struct {
-	SymbolName string `path:"name" required:"true" pattern:"^(DEX|BONDING):\\S{3,44}-[a-z0-9]{6}/\\S{3,44}-[a-z0-9]{6}$" description:"Full symbol name, including leading exchange name." example:"BONDING:UPUSD-19nr9t/MTT.0-1wff3z"`
-	Resolution string `query:"resolution" required:"true" enum:"1S,2S,5S,1,2,5,60,120,300,1D,2D,1W,2W,1M,2M,3M" description:"Resolution of the symbol"`
-	r          *http.Request
-	_          struct{} `query:"_" cookie:"_" additionalProperties:"false"`
+	// SymbolName string `path:"name" required:"true" pattern:"^(DEX|BONDING):\\S{3,44}-[a-z0-9]{6}/\\S{3,44}-[a-z0-9]{6}$" description:"Full symbol name, including leading exchange name." example:"BONDING:UPUSD-19nr9t/MTT.0-1wff3z"`
+	SymbolName string `path:"name" required:"true" `
+	// Resolution string `query:"resolution" required:"true" enum:"1S,2S,5S,1,2,5,60,120,300,1D,2D,1W,2W,1M,2M,3M" description:"Resolution of the symbol"`
+	r *http.Request
+	_ struct{} `query:"_" cookie:"_" additionalProperties:"false"`
 }
 
 func (s *subscribeInput) SetRequest(r *http.Request) {
@@ -41,10 +41,6 @@ func SubscribeInteractor(db *persistence.Database) usecase.IOInteractor {
 		if err != nil {
 			return status.Wrap(err, status.InvalidArgument)
 		}
-		_, ok := timeBcketMapping[input.Resolution]
-		if !ok {
-			return status.Wrap(errors.New("invalid resolution"), status.InvalidArgument)
-		}
 
 		fmt.Println("r", input.r, "o", output.w)
 		c, err := websocket.Accept(output.w, input.r, nil)
@@ -60,8 +56,11 @@ func SubscribeInteractor(db *persistence.Database) usecase.IOInteractor {
 		var v interface{}
 		err = wsjson.Read(ctx, c, &v)
 		if err != nil {
-			// ...
+			// TODO: NOPE
+			panic(err)
 		}
+
+		fmt.Println("v", v)
 
 		c.Close(websocket.StatusNormalClosure, "")
 
