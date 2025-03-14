@@ -20,7 +20,7 @@ type barsInput struct {
 	Resolution string   `query:"resolution" required:"true" enum:"1S,2S,5S,1,2,5,60,120,300,1D,2D,1W,2W,1M,2M,3M" description:"Resolution of the symbol"`
 	Gte        int64    `query:"gte" required:"true" minimum:"0" description:"Unix timestamp (leftmost requested bar)"`
 	Lt         int64    `query:"lt" required:"true" minimum:"0" description:"Unix timestamp (rightmost requested bar - not inclusive)"`
-	_          struct{} `query:"_" cookie:"_" additionalProperties:"false"`
+	_          struct{} `query:"_" additionalProperties:"false"`
 }
 
 type barsOutput struct {

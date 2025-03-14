@@ -30,7 +30,7 @@ type symbolsInput struct {
 	UserInput  string   `query:"input" required:"true" minLength:"3" maxLength:"128" description:"User input to search for."`
 	Exchange   *string  `query:"exchange" enum:"DEX,BONDING" description:"The requested exchange. Empty value means no filter was specified"`
 	SymbolType *string  `query:"type" pattern:"^crypto$" enum:"crypto" description:"The requested symbol type. Empty value means no filter was specified"`
-	_          struct{} `query:"_" cookie:"_" additionalProperties:"false"`
+	_          struct{} `query:"_" additionalProperties:"false"`
 }
 
 type symbol struct {

@@ -15,7 +15,7 @@ import (
 
 type symbolInput struct {
 	Name string   `path:"name" required:"true" pattern:"^(DEX|BONDING):\\S{3,44}-[a-z0-9]{6}/\\S{3,44}-[a-z0-9]{6}$" description:"Full symbol name"`
-	_    struct{} `query:"_" cookie:"_" additionalProperties:"false"`
+	_    struct{} `query:"_" additionalProperties:"false"`
 }
 
 type symbolOutput struct {
