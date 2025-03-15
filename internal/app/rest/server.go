@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5/middleware"
 	v1 "github.com/palomachain/paloma-cdp/internal/app/rest/v1"
 	"github.com/palomachain/paloma-cdp/internal/pkg/liblog"
 	"github.com/palomachain/paloma-cdp/internal/pkg/persistence"
+	"github.com/rs/cors"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/response/gzip"
 	"github.com/swaggest/rest/web"
@@ -17,8 +19,9 @@ import (
 )
 
 type Configuration struct {
-	HttpPort string `env:"CDP_REST_API_PORT" envDefault:"8011"`
-	HttpHost string `env:"CDP_REST_API_HOST" envDefault:"localhost"`
+	HttpPort           string `env:"CDP_REST_API_PORT" envDefault:"8011"`
+	HttpHost           string `env:"CDP_REST_API_HOST" envDefault:"localhost"`
+	HttpAllowedOrigins string `env:"CDP_REST_API_ALLOWED_ORIGINS" envDefault:"https://www.palomatalent.ai,https://cdp.palomachain.com"`
 }
 
 func Run(
@@ -33,8 +36,14 @@ func Run(
 	s.OpenAPISchema().SetDescription("This API grants access to live and historic chain data from Paloma. The initial feature set was built to satisfy charting solutions, but may be extended in the future.")
 	s.OpenAPISchema().SetVersion(v)
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   strings.Split(cfg.HttpAllowedOrigins, ","),
+		AllowCredentials: true,
+	})
+
 	s.Wrap(
 		gzip.Middleware,
+		c.Handler,
 	)
 
 	s.Use(

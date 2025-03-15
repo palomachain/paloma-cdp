@@ -12,6 +12,7 @@ require (
 	github.com/cometbft/cometbft v1.0.1
 	github.com/cometbft/cometbft/api v1.0.0
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/rs/cors v1.11.1
 	github.com/rs/xid v1.6.0
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggest/openapi-go v0.2.55
